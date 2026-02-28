@@ -25,7 +25,9 @@ ${JSON.stringify(data, null, 2)}
 Respond with JSON only.`;
 }
 
-export async function analyzeProject(data: ProjectData): Promise<AnalysisResult & { ai_powered: boolean }> {
+export async function analyzeProject(
+  data: ProjectData
+): Promise<AnalysisResult & { ai_powered: boolean }> {
   const apiKey = process.env.LLM_API_KEY;
 
   if (!apiKey) {
@@ -34,29 +36,36 @@ export async function analyzeProject(data: ProjectData): Promise<AnalysisResult 
   }
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
+        "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 1024,
-        messages: [{ role: "user", content: buildPrompt(data) }],
+        model: "llama3-8b-8192",
+        messages: [
+          {
+            role: "user",
+            content: buildPrompt(data),
+          },
+        ],
+        temperature: 0.3,
       }),
     });
 
-    if (!response.ok) throw new Error(`LLM API error: ${response.status}`);
+    if (!response.ok) throw new Error(`Groq API error: ${response.status}`);
 
-    const llmData = await response.json();
-    const rawText = llmData.content?.[0]?.text ?? "";
+    const groqData = await response.json();
+    const rawText = groqData.choices?.[0]?.message?.content ?? "";
     const cleaned = rawText.replace(/```json|```/g, "").trim();
     const result: AnalysisResult = JSON.parse(cleaned);
+
     return { ...result, ai_powered: true };
   } catch (err) {
-    console.warn("[FlowGuard] LLM call failed, using fallback:", err);
+    console.warn("[FlowGuard] Groq call failed, using fallback:", err);
     return { ...fallbackAnalysis(data), ai_powered: false };
   }
 }
+
+
