@@ -1,0 +1,63 @@
+03/01/2025, 09:15 - Arjun Sharma: Good morning team, project kickoff today. Let's aim for March 15 release
+03/01/2025, 09:45 - Priya Mehta: Sounds good. I will start with authentication module
+03/01/2025, 10:00 - Rahul Verma: Taking payments API, will need Stripe access keys
+03/01/2025, 10:30 - Sneha Kapoor: Starting on dashboard design today
+05/01/2025, 09:00 - Arjun Sharma: Good progress everyone. Rahul any update on Stripe keys?
+05/01/2025, 09:30 - Rahul Verma: Still waiting for Stripe API keys from the vendor
+05/01/2025, 11:00 - Priya Mehta: Auth module 60 percent done, need design approval for login screen
+08/01/2025, 09:15 - Sneha Kapoor: Dashboard layout ready for review, waiting for feedback
+08/01/2025, 10:00 - Arjun Sharma: Will review today. Rahul still blocked on Stripe?
+08/01/2025, 10:30 - Rahul Verma: Yes still waiting for API keys, approval pending from finance team
+10/01/2025, 14:00 - Priya Mehta: Login screen design still pending approval from Sneha
+10/01/2025, 14:30 - Sneha Kapoor: Sorry was blocked on other tasks, will review tomorrow
+12/01/2025, 09:00 - Arjun Sharma: Team standup reminder. What is everyone blocked on?
+12/01/2025, 09:15 - Rahul Verma: Still waiting on Stripe keys, this is delaying payments by a week
+12/01/2025, 09:30 - Priya Mehta: Auth is done but waiting for QA sign-off before merging
+12/01/2025, 09:45 - Sneha Kapoor: Dashboard needs backend API to be ready first
+15/01/2025, 11:00 - PM Vikram: Hey team can we also add an analytics dashboard? Client just requested it
+15/01/2025, 11:30 - Arjun Sharma: That would add significant scope, maybe for v2?
+15/01/2025, 11:45 - PM Vikram: No the client wants it for this release, lets add it
+17/01/2025, 09:00 - Rahul Verma: Finally got Stripe keys, starting payments webhook today
+17/01/2025, 15:00 - Priya Mehta: QA found 3 bugs in auth, need to fix before sign-off
+19/01/2025, 10:00 - PM Vikram: Also can we add dark mode? The design team suggested it
+19/01/2025, 10:15 - Sneha Kapoor: Dark mode is doable but will take extra 2 weeks
+19/01/2025, 10:30 - PM Vikram: Lets do it, add it to the scope
+21/01/2025, 09:00 - Arjun Sharma: Scope is growing, we have added analytics and dark mode, release date at risk
+21/01/2025, 09:30 - Rahul Verma: Payments webhook still blocked, need legal approval for live transactions
+21/01/2025, 10:00 - PM Vikram: Legal review is pending, should be done by end of week
+25/01/2025, 14:00 - Priya Mehta: Still waiting on legal approval for payments go-live
+25/01/2025, 14:30 - Sneha Kapoor: Dark mode is breaking the existing layout, need extra time
+28/01/2025, 09:00 - Rahul Verma: Legal approval still pending, payments completely blocked
+28/01/2025, 09:30 - Arjun Sharma: This is a problem, we are already 2 weeks behind on payments
+28/01/2025, 10:00 - PM Vikram: Enterprise client also wants team collaboration features added
+28/01/2025, 10:15 - Priya Mehta: That is too much new scope, we cannot finish by March 15
+28/01/2025, 10:30 - PM Vikram: Let us try, add it to the backlog and see what we can do
+01/02/2025, 09:00 - Sneha Kapoor: Analytics module backend not started yet, Rahul is still blocked
+01/02/2025, 09:30 - Rahul Verma: Waiting for DevOps to set up staging environment for analytics
+03/02/2025, 11:00 - Arjun Sharma: Deploy to staging still pending, DevOps team is overloaded
+03/02/2025, 15:00 - PM Vikram: Client is asking for progress update, what can I tell them?
+05/02/2025, 09:00 - Priya Mehta: Auth and notifications done. Payments still blocked on legal
+05/02/2025, 09:30 - Rahul Verma: Analytics backend not started, need 3 more weeks minimum
+05/02/2025, 10:00 - Sneha Kapoor: Dark mode is 70 percent done but blocked on brand guidelines approval
+07/02/2025, 14:00 - PM Vikram: Need status on all blocked items, board meeting tomorrow
+07/02/2025, 14:30 - Arjun Sharma: Summary - payments blocked by legal, analytics not started, dark mode blocked by design
+07/02/2025, 15:00 - PM Vikram: This is not good, release might need to be pushed
+10/02/2025, 09:00 - Rahul Verma: Still waiting on legal and staging environment, nothing unblocked
+10/02/2025, 10:00 - Priya Mehta: QA sign-off for auth finally done, that module is clear
+12/02/2025, 09:00 - Sneha Kapoor: Brand guidelines approval still pending from marketing team
+12/02/2025, 09:30 - Arjun Sharma: We are 4 weeks from deadline with payments and analytics both blocked
+14/02/2025, 11:00 - PM Vikram: Legal finally approved payments, Rahul you can proceed
+14/02/2025, 11:30 - Rahul Verma: Great but staging environment still not ready, still blocked
+17/02/2025, 09:00 - Arjun Sharma: Release date is March 15, we have serious risk of missing it
+17/02/2025, 09:30 - PM Vikram: What is the realistic date if we keep current pace?
+17/02/2025, 10:00 - Priya Mehta: April 1 at earliest if all blocks resolved this week
+19/02/2025, 14:00 - Rahul Verma: Staging finally up, starting analytics and payments deployment today
+19/02/2025, 15:00 - Sneha Kapoor: Still waiting on brand guidelines, dark mode on hold
+21/02/2025, 09:00 - Arjun Sharma: We need to cut scope, suggest removing team collaboration and dark mode
+21/02/2025, 09:30 - PM Vikram: Agreed on team collaboration, but client really wants dark mode
+21/02/2025, 10:00 - Priya Mehta: Dark mode is risky, still pending approval and breaking layouts
+24/02/2025, 09:00 - Rahul Verma: Payments 80 percent done, analytics just started, very behind
+24/02/2025, 10:00 - Sneha Kapoor: Export to CSV done. Dark mode still blocked waiting on approval
+25/02/2025, 11:00 - PM Vikram: Board wants to know if we are shipping March 15 or not
+25/02/2025, 11:30 - Arjun Sharma: Honest answer is no, we need at least 3 more weeks
+25/02/2025, 12:00 - PM Vikram: Ok let us plan for April 5 and communicate to stakeholders

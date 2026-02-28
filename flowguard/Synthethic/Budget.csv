@@ -1,0 +1,13 @@
+Item,Budgeted Hours,Spent Hours,Cost Per Hour,Status
+Arjun Sharma,120,98,65,Active
+Priya Mehta,100,92,60,Active
+Rahul Verma,110,76,60,Blocked
+Sneha Kapoor,90,81,55,Active
+DevOps Team,40,12,70,Blocked
+QA Team,50,28,45,Active
+Dark Mode Feature,30,26,58,Cut
+Team Collaboration,50,8,60,Cut
+Analytics Module,60,9,62,Blocked
+Legal Review,15,15,120,Done
+UI Design,45,43,55,Active
+Third Party Integrations,25,18,65,Blocked

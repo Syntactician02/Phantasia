@@ -1,28 +1,127 @@
-// lib/parseBudget.ts
-// Parses Budget Excel sheet and computes financial health signals
-
-import * as XLSX from "xlsx";
 import { BudgetItem } from "./sampleData";
 
-export function parseBudgetSheet(workbook: XLSX.WorkBook): BudgetItem[] {
-  const sheet = workbook.Sheets["Budget"];
+type SheetRow = {
+  Item?: string;
+  item?: string;
+
+  "Budgeted Hours"?: number | string;
+  "budgeted hours"?: number | string;
+  budgeted_hours?: number | string;
+
+  "Spent Hours"?: number | string;
+  "spent hours"?: number | string;
+  spent_hours?: number | string;
+
+  "Cost Per Hour"?: number | string;
+  "cost per hour"?: number | string;
+  cost_per_hour?: number | string;
+
+  Status?: string;
+  status?: string;
+};
+
+type XlsxUtils = {
+  sheet_to_json: <T>(sheet: unknown, opts?: unknown) => T[];
+};
+
+type WorkBook = {
+  Sheets: Record<string, unknown>;
+  SheetNames: string[];
+};
+
+function findBudgetSheet(workbook: WorkBook): unknown | null {
+  const sheetNames = workbook.SheetNames ?? Object.keys(workbook.Sheets);
+
+  // 1️⃣ Exact match
+  if (workbook.Sheets["Budget"]) return workbook.Sheets["Budget"];
+
+  // 2️⃣ Case-insensitive match
+  const ci = sheetNames.find(
+    (n) => n.toLowerCase().trim() === "budget"
+  );
+  if (ci) return workbook.Sheets[ci];
+
+  // 3️⃣ Partial match
+  const partial = sheetNames.find((n) =>
+    n.toLowerCase().includes("budget")
+  );
+  if (partial) return workbook.Sheets[partial];
+
+  // 4️⃣ Fallback first sheet
+  if (sheetNames.length > 0)
+    return workbook.Sheets[sheetNames[0]];
+
+  return null;
+}
+
+function normalizeRow(row: SheetRow): BudgetItem | null {
+  const item = String(row["Item"] ?? row["item"] ?? "").trim();
+
+  const budgeted_hours = Number(
+    row["Budgeted Hours"] ??
+      row["budgeted hours"] ??
+      row["budgeted_hours"] ??
+      0
+  );
+
+  const spent_hours = Number(
+    row["Spent Hours"] ??
+      row["spent hours"] ??
+      row["spent_hours"] ??
+      0
+  );
+
+  const cost_per_hour = Number(
+    row["Cost Per Hour"] ??
+      row["cost per hour"] ??
+      row["cost_per_hour"] ??
+      0
+  );
+
+  const status = String(
+    row["Status"] ?? row["status"] ?? "Active"
+  ).trim() as BudgetItem["status"];
+
+  // Skip empty rows
+  if (!item && budgeted_hours === 0 && spent_hours === 0)
+    return null;
+
+  return {
+    item,
+    budgeted_hours,
+    spent_hours,
+    cost_per_hour,
+    status,
+  };
+}
+
+export function parseBudgetSheet(
+  workbook: WorkBook,
+  utils: XlsxUtils
+): BudgetItem[] {
+  const sheet = findBudgetSheet(workbook);
   if (!sheet) return [];
 
-  const rows = XLSX.utils.sheet_to_json<{
-    Item: string;
-    "Budgeted Hours": number;
-    "Spent Hours": number;
-    "Cost Per Hour": number;
-    Status: string;
-  }>(sheet);
+  let rows: SheetRow[] = [];
 
-  return rows.map((r) => ({
-    item: r["Item"],
-    budgeted_hours: Number(r["Budgeted Hours"]) || 0,
-    spent_hours: Number(r["Spent Hours"]) || 0,
-    cost_per_hour: Number(r["Cost Per Hour"]) || 0,
-    status: (r["Status"] as BudgetItem["status"]) ?? "Active",
-  }));
+  try {
+    rows = utils.sheet_to_json<SheetRow>(sheet, {
+      defval: "",
+      raw: false,
+    });
+  } catch (err) {
+    console.warn("[parseBudget] sheet_to_json failed:", err);
+    return [];
+  }
+
+  const results: BudgetItem[] = [];
+
+  for (const row of rows) {
+    const normalized = normalizeRow(row);
+    if (normalized) results.push(normalized);
+  }
+
+  return results;
 }
 
 export interface FinancialSummary {
@@ -31,7 +130,7 @@ export interface FinancialSummary {
   burn_percent: number;
   wasted_hours: number;
   wasted_cost: number;
-  blocked_cost: number;    // money being burned on blocked work
+  blocked_cost: number;
   financial_risk: "Low" | "Medium" | "High";
   top_waste_item: string;
 }
@@ -49,37 +148,61 @@ export function computeFinancialHealth(
   let maxWaste = 0;
 
   for (const item of items) {
-    const budgetedCost = item.budgeted_hours * item.cost_per_hour;
-    const spentCost = item.spent_hours * item.cost_per_hour;
+    if (!item) continue;
+
+    const budgetedCost =
+      (item.budgeted_hours ?? 0) *
+      (item.cost_per_hour ?? 0);
+
+    const spentCost =
+      (item.spent_hours ?? 0) *
+      (item.cost_per_hour ?? 0);
 
     totalBudgeted += budgetedCost;
     totalSpent += spentCost;
 
-    // Cut items = wasted spend
+    // CUT = wasted money
     if (item.status === "Cut") {
-      const waste = item.spent_hours * item.cost_per_hour;
-      wastedHours += item.spent_hours;
+      const waste =
+        (item.spent_hours ?? 0) *
+        (item.cost_per_hour ?? 0);
+
+      wastedHours += item.spent_hours ?? 0;
       wastedCost += waste;
-      if (waste > maxWaste) { maxWaste = waste; topWasteItem = item.item; }
+
+      if (waste > maxWaste) {
+        maxWaste = waste;
+        topWasteItem = item.item;
+      }
     }
 
-    // Blocked items = money burning with no output
+    // BLOCKED = risk money
     if (item.status === "Blocked") {
       blockedCost += spentCost;
     }
   }
 
-  const burnPercent = totalBudgeted > 0
-    ? Math.round((totalSpent / totalBudgeted) * 100)
-    : 0;
+  const burnPercent =
+    totalBudgeted > 0
+      ? Math.round((totalSpent / totalBudgeted) * 100)
+      : 0;
 
-  // Risk: if burn% is way higher than time used, that's a problem
-  const timeUsedPercent = 100 - timeRemainingPercent;
-  const overBurn = burnPercent - timeUsedPercent;
+  const expectedBurn = 100 - timeRemainingPercent;
+  const overBurn = burnPercent - expectedBurn;
 
   let financial_risk: "Low" | "Medium" | "High" = "Low";
-  if (overBurn > 20 || wastedCost > totalBudgeted * 0.1) financial_risk = "High";
-  else if (overBurn > 10 || blockedCost > totalBudgeted * 0.05) financial_risk = "Medium";
+
+  if (
+    overBurn > 20 ||
+    wastedCost > totalBudgeted * 0.1
+  ) {
+    financial_risk = "High";
+  } else if (
+    overBurn > 10 ||
+    blockedCost > totalBudgeted * 0.05
+  ) {
+    financial_risk = "Medium";
+  }
 
   return {
     total_budgeted_cost: totalBudgeted,
