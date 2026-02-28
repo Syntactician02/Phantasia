@@ -43,10 +43,3 @@ const config: Config = {
 };
 
 export default config;
-```
-
----
-
-### `flowguard/.env.example`
-```
-LLM_API_KEY=your_api_key_here
