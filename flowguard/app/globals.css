@@ -4,16 +4,23 @@
 @tailwind components;
 @tailwind utilities;
 
-* {
+/* Force base colors so page never shows blank */
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
-body {
-  background: #0A0C10;
-  color: #E5E7EB;
-  font-family: 'DM Sans', sans-serif;
+html {
+  background-color: #0A0C10;
 }
 
+body {
+  background-color: #0A0C10;
+  color: #E5E7EB;
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+}
+
+/* Subtle grid texture overlay */
 body::before {
   content: '';
   position: fixed;
@@ -26,12 +33,32 @@ body::before {
   z-index: 0;
 }
 
-::-webkit-scrollbar { width: 6px; }
+/* Custom scrollbar */
+::-webkit-scrollbar       { width: 6px; }
 ::-webkit-scrollbar-track { background: #111318; }
 ::-webkit-scrollbar-thumb { background: #1E2028; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #F97316; }
 
-.recharts-text { fill: #9CA3AF !important; font-family: 'JetBrains Mono', monospace !important; font-size: 11px !important; }
+/* Recharts overrides */
+.recharts-text {
+  fill: #9CA3AF !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 11px !important;
+}
 .recharts-cartesian-grid-horizontal line,
-.recharts-cartesian-grid-vertical line { stroke: #1E2028 !important; }
+.recharts-cartesian-grid-vertical line {
+  stroke: #1E2028 !important;
+}
 .recharts-tooltip-wrapper { outline: none !important; }
+
+/* Utility classes for custom colors — fallback if Tailwind purge misses them */
+.bg-bg      { background-color: #0A0C10; }
+.bg-surface { background-color: #111318; }
+.bg-accent  { background-color: #F97316; }
+.text-accent { color: #F97316; }
+.text-muted  { color: #6B7280; }
+.text-text   { color: #E5E7EB; }
+.text-safe   { color: #22C55E; }
+.text-danger { color: #EF4444; }
+.text-warn   { color: #EAB308; }
+.border-border { border-color: #1E2028; }

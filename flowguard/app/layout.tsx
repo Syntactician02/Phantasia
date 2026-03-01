@@ -6,10 +6,24 @@ export const metadata: Metadata = {
   description: "We detect hidden delays before your product misses deadline.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <body className="min-h-screen relative z-10">{children}</body>
+      <body
+        style={{
+          backgroundColor: "#0A0C10",
+          color: "#E5E7EB",
+          minHeight: "100vh",
+        }}
+      >
+        <div style={{ position: "relative", zIndex: 1 }}>
+          {children}
+        </div>
+      </body>
     </html>
   );
 }
