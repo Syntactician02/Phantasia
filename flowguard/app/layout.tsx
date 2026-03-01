@@ -3,26 +3,14 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "FlowGuard — Release Intelligence",
-  description: "We detect hidden delays before your product misses deadline.",
+  description: "AI-powered release risk analysis for product teams.",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body
-        style={{
-          backgroundColor: "#0A0C10",
-          color: "#E5E7EB",
-          minHeight: "100vh",
-        }}
-      >
-        <div style={{ position: "relative", zIndex: 1 }}>
-          {children}
-        </div>
+      <body style={{ backgroundColor: "#0D1117", color: "#CDD9E5", minHeight: "100vh" }}>
+        {children}
       </body>
     </html>
   );
