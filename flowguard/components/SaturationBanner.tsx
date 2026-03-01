@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { sampleProject } from "@/lib/sampleData";
+import { AnalysisResult, sampleProject, PrioritizedTask } from "@/lib/sampleData";
 import { FinalResult } from "@/lib/analyzeProject";
-import { SATURATION_THRESHOLDS } from "@/lib/saturationEngine";
+import { SaturationState, SATURATION_THRESHOLDS } from "@/lib/saturationEngine";
 
 function getRiskColor(score: number) {
   if (score >= 70) return "#F85149";
@@ -48,7 +48,7 @@ export default function Dashboard() {
         const raw = sessionStorage.getItem("project");
         if (raw) project = JSON.parse(raw);
       } catch {
-        console.warn("[Dashboard] Could not parse sessionStorage, using sample.");
+        console.warn("[Dashboard] Could not parse project from sessionStorage, using sample.");
       }
 
       try {
@@ -83,16 +83,7 @@ export default function Dashboard() {
           return;
         }
 
-        setResult(json.data as FinalResult);
-
-        // Debug logs — check browser console F12
-        console.log("[Dashboard] isBlocked  :", json.data?.saturation?.isBlocked);
-        console.log("[Dashboard] isWarning  :", json.data?.saturation?.isWarning);
-        console.log("[Dashboard] waiting    :", json.data?.saturation?.waiting?.score);
-        console.log("[Dashboard] scopeDrift :", json.data?.saturation?.scope_drift?.score);
-        console.log("[Dashboard] held_tasks :", json.data?.held_tasks?.length);
-        console.log("[Dashboard] blockReason:", json.data?.saturation?.blockReason);
-
+        setResult(json.data);
       } catch (err) {
         setError("Network error — could not reach the analysis server.");
         setErrorDetail(err instanceof Error ? err.message : String(err));
@@ -134,6 +125,9 @@ export default function Dashboard() {
         }} />
         <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: "#545D68", letterSpacing: "0.15em" }}>
           ANALYZING PROJECT DATA...
+        </p>
+        <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: "#2D333B", letterSpacing: "0.1em" }}>
+          This may take up to 15 seconds if AI is enabled
         </p>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -248,9 +242,10 @@ export default function Dashboard() {
 
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 32px 80px" }}>
 
-        {/* ── ROW 1: Hero + 4 stats ── */}
+        {/* ── ROW 1: Hero metric + 4 stats ── */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, marginBottom: 2 }}>
 
+          {/* Big probability */}
           <div style={{ background: "#161B22", border: "1px solid #2D333B", padding: "44px 48px" }}>
             <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: "#545D68", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
               Deadline Extension Probability
@@ -285,13 +280,16 @@ export default function Dashboard() {
             </div>
             <div style={{ height: 4, background: "#2D333B", borderRadius: 2 }}>
               <div style={{
-                height: "100%", width: `${animatedProb}%`,
-                background: getRiskColor(prob), borderRadius: 2,
+                height: "100%",
+                width: `${animatedProb}%`,
+                background: getRiskColor(prob),
+                borderRadius: 2,
                 transition: "width 0.05s linear",
               }} />
             </div>
           </div>
 
+          {/* 4 stat boxes */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
             {[
               { label: "Waiting Score",  value: result.waiting_score ?? 0,       unit: "",  desc: "Task blockage level" },
@@ -300,7 +298,8 @@ export default function Dashboard() {
               { label: "Wasted Hours",   value: result.wasted_hours ?? 0,        unit: "h", desc: "On cut features" },
             ].map(({ label, value, unit, desc }) => (
               <div key={label} style={{
-                background: "#161B22", border: "1px solid #2D333B", padding: "28px",
+                background: "#161B22", border: "1px solid #2D333B",
+                padding: "28px 28px",
                 display: "flex", flexDirection: "column", justifyContent: "space-between",
               }}>
                 <div>
@@ -308,7 +307,11 @@ export default function Dashboard() {
                     {label}
                   </p>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                    <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 44, fontWeight: 700, lineHeight: 1, color: getRiskColor(value) }}>
+                    <span style={{
+                      fontFamily: "'Playfair Display', serif",
+                      fontSize: 44, fontWeight: 700, lineHeight: 1,
+                      color: getRiskColor(value),
+                    }}>
                       {value}
                     </span>
                     <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 16, color: getRiskColor(value), opacity: 0.7 }}>
@@ -348,8 +351,10 @@ export default function Dashboard() {
                 </div>
                 <div style={{ height: 5, background: "#2D333B", borderRadius: 2 }}>
                   <div style={{
-                    height: "100%", width: `${val}%`,
-                    background: getRiskColor(val), borderRadius: 2,
+                    height: "100%",
+                    width: `${val}%`,
+                    background: getRiskColor(val),
+                    borderRadius: 2,
                     transition: "width 1.2s ease",
                   }} />
                 </div>
@@ -359,19 +364,20 @@ export default function Dashboard() {
         </div>
 
         {/* ── SATURATION BANNER ── */}
-        {saturation !== null && (saturation.isBlocked || saturation.isWarning) && (
+        {saturation && (saturation.isBlocked || saturation.isWarning) && (
           <div style={{
-            background:   saturation.isBlocked ? "rgba(239,68,68,0.08)"  : "rgba(234,179,8,0.08)",
-            border:       `2px solid ${saturation.isBlocked ? "#EF4444" : "#EAB308"}`,
-            boxShadow:    `0 0 32px ${saturation.isBlocked ? "rgba(239,68,68,0.2)" : "rgba(234,179,8,0.15)"}`,
-            padding:      "28px 32px",
+            background:  saturation.isBlocked ? "rgba(239,68,68,0.06)"  : "rgba(234,179,8,0.06)",
+            border:      `1px solid ${saturation.isBlocked ? "#EF4444" : "#EAB308"}`,
+            boxShadow:   `0 0 24px ${saturation.isBlocked ? "rgba(239,68,68,0.15)" : "rgba(234,179,8,0.12)"}`,
+            padding:     "24px 32px",
             marginBottom: 2,
           }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontSize: 22 }}>{saturation.isBlocked ? "🔒" : "⚠️"}</span>
+                <span style={{ fontSize: 18 }}>{saturation.isBlocked ? "🔒" : "⚠️"}</span>
                 <span style={{
-                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, fontWeight: 700,
+                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, fontWeight: 700,
                   letterSpacing: "0.12em",
                   color: saturation.isBlocked ? "#EF4444" : "#EAB308",
                 }}>
@@ -383,74 +389,72 @@ export default function Dashboard() {
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {saturation.waiting.level !== "CLEAR" && (
                   <span style={{
-                    fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
-                    padding: "4px 12px",
+                    fontFamily: "'IBM Plex Mono', monospace", fontSize: 10,
+                    padding: "3px 10px",
                     background: saturation.isBlocked ? "rgba(239,68,68,0.15)" : "rgba(234,179,8,0.15)",
-                    color:      saturation.isBlocked ? "#EF4444" : "#EAB308",
-                    border:     `1px solid ${saturation.isBlocked ? "#EF444444" : "#EAB30844"}`,
+                    color:      saturation.isBlocked ? "#EF4444"              : "#EAB308",
+                    border:     `1px solid ${saturation.isBlocked ? "#EF444433" : "#EAB30833"}`,
                   }}>
                     ⏳ Waiting {saturation.waiting.score}/100
                   </span>
                 )}
                 {saturation.scope_drift.level !== "CLEAR" && (
                   <span style={{
-                    fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
-                    padding: "4px 12px",
+                    fontFamily: "'IBM Plex Mono', monospace", fontSize: 10,
+                    padding: "3px 10px",
                     background: saturation.isBlocked ? "rgba(239,68,68,0.15)" : "rgba(234,179,8,0.15)",
-                    color:      saturation.isBlocked ? "#EF4444" : "#EAB308",
-                    border:     `1px solid ${saturation.isBlocked ? "#EF444444" : "#EAB30844"}`,
+                    color:      saturation.isBlocked ? "#EF4444"              : "#EAB308",
+                    border:     `1px solid ${saturation.isBlocked ? "#EF444433" : "#EAB30833"}`,
                   }}>
                     📈 Scope Drift {saturation.scope_drift.score}/100
                   </span>
                 )}
                 {heldTasks.length > 0 && (
                   <span style={{
-                    fontFamily: "'IBM Plex Mono', monospace", fontSize: 11,
-                    padding: "4px 12px",
+                    fontFamily: "'IBM Plex Mono', monospace", fontSize: 10,
+                    padding: "3px 10px",
                     background: "#2D333B", color: "#768390",
                     border: "1px solid #3D444D",
                   }}>
-                    ⏸ {heldTasks.length} task{heldTasks.length !== 1 ? "s" : ""} held
+                    {heldTasks.length} task{heldTasks.length !== 1 ? "s" : ""} held
                   </span>
                 )}
               </div>
             </div>
 
+            {/* Reason */}
             {saturation.blockReason && (
-              <p style={{
-                fontFamily: "'IBM Plex Sans', sans-serif", fontSize: 15,
-                color: "#CDD9E5", lineHeight: 1.8, marginBottom: 20,
-              }}>
+              <p style={{ fontFamily: "'IBM Plex Sans', sans-serif", fontSize: 14, color: "#CDD9E5", lineHeight: 1.7, marginBottom: 16 }}>
                 {saturation.blockReason}
               </p>
             )}
 
+            {/* Completion gate progress bar */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: "#545D68" }}>
-                  Initial task completion toward hold gate
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: "#545D68" }}>
+                  Initial task completion
                 </span>
                 <span style={{
-                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, fontWeight: 700,
+                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, fontWeight: 700,
                   color: saturation.isBlocked ? "#EF4444" : "#EAB308",
                 }}>
-                  {Math.round(saturation.initialCompletionRate * 100)}% / {Math.round(SATURATION_THRESHOLDS.INITIAL_COMPLETION_GATE * 100)}%
+                  {Math.round(saturation.initialCompletionRate * 100)}% / {Math.round(SATURATION_THRESHOLDS.INITIAL_COMPLETION_GATE * 100)}% gate
                 </span>
               </div>
-              <div style={{ height: 8, background: "#2D333B", borderRadius: 4 }}>
+              <div style={{ height: 6, background: "#2D333B", borderRadius: 3 }}>
                 <div style={{
                   height: "100%",
                   width: `${Math.min(100, Math.round((saturation.initialCompletionRate / SATURATION_THRESHOLDS.INITIAL_COMPLETION_GATE) * 100))}%`,
-                  background:  saturation.isBlocked ? "#EF4444" : "#EAB308",
-                  borderRadius: 4,
-                  transition:  "width 1s ease",
-                  boxShadow:   `0 0 10px ${saturation.isBlocked ? "rgba(239,68,68,0.4)" : "rgba(234,179,8,0.4)"}`,
+                  background: saturation.isBlocked ? "#EF4444" : "#EAB308",
+                  borderRadius: 3,
+                  transition: "width 1s ease",
                 }} />
               </div>
-              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: "#545D68", marginTop: 8 }}>
+              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: "#2D333B", marginTop: 6 }}>
                 {Math.round(saturation.initialCompletionRate * 100) < Math.round(SATURATION_THRESHOLDS.INITIAL_COMPLETION_GATE * 100)
                   ? `${Math.round(SATURATION_THRESHOLDS.INITIAL_COMPLETION_GATE * 100) - Math.round(saturation.initialCompletionRate * 100)}% more initial work needed to lift the hold`
-                  : "✓ Gate requirement met — held tasks will be admitted on next analysis"}
+                  : "Gate requirement met — held tasks will be admitted on next analysis"}
               </p>
             </div>
           </div>
@@ -497,7 +501,8 @@ export default function Dashboard() {
                       padding: "12px 20px", textAlign: "left",
                       fontFamily: "'IBM Plex Mono', monospace",
                       fontSize: 10, fontWeight: 500,
-                      color: "#545D68", letterSpacing: "0.1em", textTransform: "uppercase",
+                      color: "#545D68", letterSpacing: "0.1em",
+                      textTransform: "uppercase",
                     }}>
                       {h}
                     </th>
@@ -554,11 +559,12 @@ export default function Dashboard() {
             </table>
           )}
 
-          {/* Held tasks */}
+          {/* Held tasks section */}
           {heldTasks.length > 0 && (
             <>
               <div style={{
-                padding: "16px 32px", borderTop: "1px solid #2D333B",
+                padding: "16px 32px",
+                borderTop: "1px solid #2D333B",
                 display: "flex", alignItems: "center", gap: 16,
                 background: "rgba(234,179,8,0.03)",
               }}>
@@ -568,13 +574,13 @@ export default function Dashboard() {
                 </span>
                 <div style={{ flex: 1, height: 1, background: "#2D333B" }} />
               </div>
-              <table style={{ width: "100%", borderCollapse: "collapse", opacity: 0.6 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", opacity: 0.65 }}>
                 <tbody>
                   {heldTasks.map((task, i) => {
                     const dotColor = STATUS_DOT[task.status] ?? "#545D68";
                     return (
                       <tr key={`held-${i}`} style={{ borderBottom: "1px solid #1C2333" }}>
-                        <td style={{ padding: "12px 20px", fontFamily: "'IBM Plex Mono', monospace", fontSize: 14, color: "#EAB308" }}>⏸</td>
+                        <td style={{ padding: "12px 20px", fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: "#EAB308" }}>⏸</td>
                         <td style={{ padding: "12px 20px", fontFamily: "'IBM Plex Sans', sans-serif", fontSize: 14, fontWeight: 500, color: "#768390", maxWidth: 200 }}>
                           {task.title}
                         </td>
@@ -614,6 +620,7 @@ export default function Dashboard() {
         {/* ── ROW 4: Insights + Recommendations ── */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
 
+          {/* Insights */}
           <div style={{ background: "#161B22", border: "1px solid #2D333B" }}>
             <div style={{ padding: "20px 28px", borderBottom: "1px solid #2D333B" }}>
               <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: "#545D68", letterSpacing: "0.15em", textTransform: "uppercase" }}>
@@ -642,6 +649,7 @@ export default function Dashboard() {
             )}
           </div>
 
+          {/* Recommendations */}
           <div style={{ background: "#161B22", border: "1px solid #2D333B" }}>
             <div style={{ padding: "20px 28px", borderBottom: "1px solid #2D333B" }}>
               <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: "#545D68", letterSpacing: "0.15em", textTransform: "uppercase" }}>

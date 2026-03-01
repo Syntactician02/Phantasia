@@ -72,7 +72,12 @@ export interface AnalysisResult {
   recommendations: string[];
 
   ai_powered: boolean;
+
+  // Saturation gating (new)
+  held_tasks?: PrioritizedTask[];
+  saturation?: import("./saturationEngine").SaturationState;
 }
+
 
 export interface PrioritizedTask {
   title: string;
